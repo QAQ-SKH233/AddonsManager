@@ -35,6 +35,12 @@ public partial class AddonsManager
 
     public bool DownloadAddon(string addonId, bool important, bool force)
     {
+        if (!SteamAPIInitialized)
+        {
+            Core.Logger.LogWarning($"Cannot download addon with ID: {addonId}. Steam API is not initialized.");
+            return false;
+        }
+
         var publishedAddon = new PublishedFileId_t(ulong.TryParse(addonId, out ulong id) ? id : 0);
 
         if (publishedAddon.m_PublishedFileId == 0)
@@ -76,6 +82,12 @@ public partial class AddonsManager
 
     public bool MountAddon(string addonId, bool addToTail = false)
     {
+        if (!SteamAPIInitialized)
+        {
+            Core.Logger.LogWarning($"Cannot mount addon with ID: {addonId}. Steam API is not initialized.");
+            return false;
+        }
+
         var serverMountedAddons = WorkshopMapId.Split(',');
         if (serverMountedAddons.Contains(addonId))
         {
@@ -84,6 +96,13 @@ public partial class AddonsManager
         }
 
         var publishedAddon = new PublishedFileId_t(ulong.TryParse(addonId, out ulong id) ? id : 0);
+
+        if (publishedAddon.m_PublishedFileId == 0)
+        {
+            Core.Logger.LogWarning($"Invalid addon ID: {addonId}");
+            return false;
+        }
+
         var itemState = SteamGameServerUGC.GetItemState(publishedAddon);
 
         if ((itemState & (uint)EItemState.k_EItemStateLegacyItem) != 0)
@@ -196,6 +215,7 @@ public partial class AddonsManager
 
     public void ShowDownloadProgress()
     {
+        if (!SteamAPIInitialized) return;
         if (_downloadingAddons.Count == 0) return;
 
         _downloadingAddons.TryPeek(out var downloadingCurrentAddon);
